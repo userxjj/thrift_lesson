@@ -72,35 +72,52 @@ class Pool
 			}
 
 		}
+
+		bool check_match(uint32_t i,uint32_t j)
+		{
+			auto a=users[i],b=users[j];
+			int dt=abs(a.score-b.score);
+			int a_max_diff=wt[i]*50;
+			int b_max_diff=wt[i]*50;
+
+			return dt<=a_max_diff&& dt<=b_max_diff;
+		}
+
 		void match()
 		{
+			for(uint32_t i=0;i<wt.size();i++ )
+				wt[i]++;
 			while(users.size()>1)
 			{
-				sort(users.begin(),users.end(),[&](User& a,User b){
-						return a.score<b.score;
-						});
 
 				bool flag = true;
 				for(uint32_t i=1;i<users.size();i++)
 				{
-					auto a=users[i-1],b=users[i];
-					if(b.score-a.score<=50)
+					for(uint32_t j=i+1;j<users.size();j++)
 					{
-						users.erase(users.begin()+i-1,users.begin()+i+1);
+					auto a=users[i],b=users[j];
+					if(check_match(i,j)){
+						auto a=users[i],b=users[j];
+						users.erase(users.begin() +j);
+						users.erase(users.begin() +i);
+						wt.erase(wt.begin()+j);
+						wt.erase(wt.begin()+i);
 						save_result(a.id,b.id);
-
 						flag=false;
 						break;
 
 					}
 				}
-				if (flag)break;
+				if (!flag)break;
+				}
+			    if(flag)break;
 
 			}
 		}
 		void add(User user)
 		{
 			users.push_back(user);
+			wt.push_back(0);
 		}
 		void remove(User user)
 		{
@@ -108,11 +125,13 @@ class Pool
 				if(users[i].id==user.id)
 				{
 					users.erase(users.begin()+i);
+					wt.erase(wt.begin() + i);
 					break;
 				}
 		}
 	private:
 		vector<User> users;
+		vector<int> wt;   //等待时间
 
 }pool;
 
@@ -201,8 +220,6 @@ void consume_task()
 			if(task.type=="add") pool.add(task.user);
 			else if(task.type=="remove") pool.remove(task.user);
 
-
-			pool.match();
 		}
 	}
 }
